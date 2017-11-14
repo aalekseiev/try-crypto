@@ -1,14 +1,17 @@
 package com.example.trycrypto;
 
+import java.io.File;
+
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+
+import com.google.common.util.concurrent.Service;
 
 @SpringBootApplication
 public class TryCryptoApplication {
@@ -21,24 +24,18 @@ public class TryCryptoApplication {
 	CommandLineRunner cmdrunner() {
 		return args -> {
 			BriefLogFormatter.init();
-			if (args.length < 2) {
-			    System.err.println("Usage: address-to-send-back-to [regtest|testnet]");
-			    return;
-			}
 			
-			// Figure out which network we should connect to. Each one gets its own set of files.
-			NetworkParameters params;
-			String filePrefix;
-			if (args[1].equals("testnet")) {
-			    params = TestNet3Params.get();
-			    filePrefix = "forwarding-service-testnet";
-			} else if (args[1].equals("regtest")) {
-			    params = RegTestParams.get();
-			    filePrefix = "forwarding-service-regtest";
-			} else {
-			    params = MainNetParams.get();
-			    filePrefix = "forwarding-service";
-			}
+			NetworkParameters params = new TestNet3Params();
+			WalletAppKit wak = new WalletAppKit(params , new File("/home/kseniia/tmp/bitcoin"), "prfx_");
+			Service startAsync = wak.startAsync();
+			System.out.println("Started service");
+			Thread.sleep(1000);
+			
+			System.out.println("wallet.balance.value=" + wak.wallet().getBalance().getValue());
+			
+			System.out.println("Going to stop async");
+			Service stopAsync = wak.stopAsync();
+			
 		};
 	}
 }
