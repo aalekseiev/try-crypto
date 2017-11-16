@@ -58,3 +58,50 @@ Going to stop async
 2017-11-14 09:52:09.923  INFO 13883 --- [       Thread-2] o.s.j.e.a.AnnotationMBeanExporter        : Unregistering JMX-exposed beans on shutdown
 
 </pre>
+
+
+The dns names are hardcoded inside bitcoinj class MainNetParams.
+This is the listing of one of that dns names resolved into ip
+
+<pre>
+seed.bitcoin.sipa.be has address 185.21.217.57
+seed.bitcoin.sipa.be has address 86.77.91.236
+seed.bitcoin.sipa.be has address 188.195.246.19
+seed.bitcoin.sipa.be has address 148.251.234.144
+seed.bitcoin.sipa.be has address 204.15.192.50
+seed.bitcoin.sipa.be has address 45.77.80.116
+seed.bitcoin.sipa.be has address 24.88.116.243
+seed.bitcoin.sipa.be has address 173.164.81.170
+seed.bitcoin.sipa.be has address 90.253.152.123
+seed.bitcoin.sipa.be has address 24.107.140.236
+seed.bitcoin.sipa.be has address 83.164.131.242
+seed.bitcoin.sipa.be has address 83.150.18.225
+seed.bitcoin.sipa.be has address 90.178.156.102
+seed.bitcoin.sipa.be has address 5.189.165.22
+seed.bitcoin.sipa.be has address 108.34.222.147
+seed.bitcoin.sipa.be has address 94.226.148.195
+seed.bitcoin.sipa.be has address 82.212.7.242
+seed.bitcoin.sipa.be has address 192.241.139.18
+seed.bitcoin.sipa.be has address 185.4.24.199
+seed.bitcoin.sipa.be has address 47.52.190.83
+seed.bitcoin.sipa.be has address 85.4.115.66
+seed.bitcoin.sipa.be has address 121.214.217.204
+seed.bitcoin.sipa.be has address 24.48.172.247
+seed.bitcoin.sipa.be has address 97.95.169.43
+seed.bitcoin.sipa.be has address 106.15.186.248
+seed.bitcoin.sipa.be has IPv6 address 2001:0:4137:9e76:20a0:856:adf2:de90
+seed.bitcoin.sipa.be has IPv6 address 2001:0:4137:9e76:97:155f:3e69:27b5
+seed.bitcoin.sipa.be has IPv6 address 2001:0:9d38:6abd:1c06:2a4d:8594:1dfe
+seed.bitcoin.sipa.be has IPv6 address 2001:0:4137:9e76:4f6:292f:6294:4c33
+seed.bitcoin.sipa.be has IPv6 address 2001:0:9d38:90d7:38b0:ce83:4902:5cf9
+seed.bitcoin.sipa.be has IPv6 address 2001:470:e18f:0:52e5:49ff:fe3f:e74d
+seed.bitcoin.sipa.be has IPv6 address 2604:180:1:71f::87d2
+seed.bitcoin.sipa.be has IPv6 address 2001:0:4137:9e76:43a:20a9:a780:eef1
+seed.bitcoin.sipa.be has IPv6 address 2001:0:9d38:6ab8:821:eccc:6d61:9a27
+seed.bitcoin.sipa.be has IPv6 address 2001:0:4137:9e76:c95:28a7:53b4:a5fa
+seed.bitcoin.sipa.be has IPv6 address 2607:5300:120:962::
+seed.bitcoin.sipa.be has IPv6 address 2001:0:5ef5:79fb:381c:358b:ba08:b12c
+seed.bitcoin.sipa.be has IPv6 address 2001:0:9d38:6abd:1ce7:533:26f3:2aab
+seed.bitcoin.sipa.be has IPv6 address 2001:0:9d38:78cf:10ee:3cb6:fa96:eb81
+seed.bitcoin.sipa.be has IPv6 address 2001:0:9d38:90d7:3027:1b7e:b2eb:96de
+</pre>
