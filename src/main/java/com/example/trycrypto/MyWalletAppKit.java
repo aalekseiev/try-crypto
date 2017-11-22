@@ -2,15 +2,11 @@ package com.example.trycrypto;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Nullable;
@@ -32,16 +28,11 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.DeterministicSeed;
-import org.bitcoinj.wallet.KeyChainGroup;
-import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
-import org.bitcoinj.wallet.WalletProtobufSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.trycrypto.repository.PersistableWalletRepository;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -53,8 +44,6 @@ public class MyWalletAppKit extends AbstractIdleService {
 	private Wallet vWallet;
 	protected volatile PeerGroup vPeerGroup;
 
-	private final NetworkParameters params;
-	
 	protected volatile Context context;
 	
 	protected boolean autoStop = true;
@@ -68,12 +57,8 @@ public class MyWalletAppKit extends AbstractIdleService {
     
     protected String userAgent, version;
     
-//    private File vWalletFile;
-    
     @Nullable protected DeterministicSeed restoreFromSeed;
-    
-    protected WalletProtobufSerializer.WalletFactory walletFactory;
-    
+
     protected InputStream checkpoints;
     
     protected PeerAddress[] peerAddresses;
@@ -83,13 +68,18 @@ public class MyWalletAppKit extends AbstractIdleService {
 
     protected boolean useTor = false;   // Perhaps in future we can change this to true.
 
-	private final PersistableWalletRepository repo;
+    //
+    
+	private final PersistableWalletService service;
 
 	private final Long walletId;
-    
-	public MyWalletAppKit(PersistableWalletRepository repo, NetworkParameters params, Long walletId) {
+	
+	private final NetworkParameters params;
+	
+	    
+	public MyWalletAppKit(PersistableWalletService service, NetworkParameters params, Long walletId) {
 		super();
-		this.repo = repo;
+		this.service = service;
 		this.params = params;
 		this.context = new Context(params);
 		this.walletId = walletId;
@@ -107,14 +97,14 @@ public class MyWalletAppKit extends AbstractIdleService {
 
         maybeMoveOldWalletOutOfTheWay();
 
-        Optional<PersistableWallet> pw = repo.findById(walletId);
+        Optional<PersistableWallet> pw = service.findById(walletId);
                 
         if (pw.isPresent()) {
-            wallet = loadWallet(walletId, shouldReplayWallet);
+            wallet = service.loadWallet(walletId, shouldReplayWallet, params);
         } else {
-            wallet = createWallet();
+            wallet = service.createWallet(restoreFromSeed, params);
             wallet.freshReceiveKey();
-            for (WalletExtension e : provideWalletExtensions()) {
+            for (WalletExtension e : service.provideWalletExtensions()) {
                 wallet.addExtension(e);
             }
 
@@ -127,9 +117,9 @@ public class MyWalletAppKit extends AbstractIdleService {
             PersistableWallet persistableWallet = new PersistableWallet();
             persistableWallet.setBody(baos.toByteArray());
             persistableWallet.setName("LalalaTratata wolit");
-            persistableWallet = repo.save(persistableWallet);
+            persistableWallet = service.save(persistableWallet);
             
-            wallet = loadWallet(persistableWallet.getId(), false);
+            wallet = service.loadWallet(persistableWallet.getId(), false, params);
         }
 
 //        if (useAutoSave) {
@@ -156,56 +146,12 @@ public class MyWalletAppKit extends AbstractIdleService {
 //        }
     }
     
-    /**
-     * <p>Override this to return wallet extensions if any are necessary.</p>
-     *
-     * <p>When this is called, chain(), store(), and peerGroup() will return the created objects, however they are not
-     * initialized/started.</p>
-     */
-    protected List<WalletExtension> provideWalletExtensions() throws Exception {
-        return ImmutableList.of();
-    }
+
     
 //    protected void setupAutoSave(Wallet wallet) {
 //        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
 //    }
 
-    
-    private Wallet loadWallet(Long walletId, boolean shouldReplayWallet) throws Exception {
-        Wallet wallet;
-        PersistableWallet wolit = repo.findById(walletId).get();
-        InputStream walletStream = new ByteArrayInputStream(wolit.getBody());
-        try {
-            List<WalletExtension> extensions = provideWalletExtensions();
-            WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
-            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-            final WalletProtobufSerializer serializer;
-            if (walletFactory != null)
-                serializer = new WalletProtobufSerializer(walletFactory);
-            else
-                serializer = new WalletProtobufSerializer();
-            wallet = serializer.readWallet(params, extArray, proto);
-            if (shouldReplayWallet)
-                wallet.reset();
-        } finally {
-            walletStream.close();
-        }
-        return wallet;
-    }
-
-    protected Wallet createWallet() {
-        KeyChainGroup kcg;
-        if (restoreFromSeed != null)
-            kcg = new KeyChainGroup(params, restoreFromSeed);
-        else
-            kcg = new KeyChainGroup(params);
-        if (walletFactory != null) {
-            return walletFactory.create(params, kcg);
-        } else {
-            return new Wallet(params, kcg);  // default
-        }
-    }
-    
     protected PeerGroup createPeerGroup() throws TimeoutException {
             return new PeerGroup(params, vChain);
     }
@@ -224,7 +170,7 @@ public class MyWalletAppKit extends AbstractIdleService {
             File chainFile = new File("my.spvchain");
             boolean chainFileExists = chainFile.exists();
             
-            boolean walletFileExists = repo.findById(walletId).isPresent();
+            boolean walletFileExists = service.walletExists(walletId);
             
             boolean shouldReplayWallet = (walletFileExists && !chainFileExists) || restoreFromSeed != null;
             vWallet = createOrLoadWallet(walletId, shouldReplayWallet);
