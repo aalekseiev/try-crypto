@@ -4,7 +4,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletProtobufSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -31,7 +30,8 @@ public class TryCryptoApplication {
 			
 			NetworkParameters params = new MainNetParams();
 			
-			MyWalletAppKit wak = new MyWalletAppKit(repo, params);
+			Long walletId = 1L;
+			MyWalletAppKit wak = new MyWalletAppKit(repo, params, walletId);
 			Service startAsync = wak.startAsync();
 			
 			System.out.println("Started service");
@@ -42,8 +42,12 @@ public class TryCryptoApplication {
 //			System.out.println("wallet.params" + wallet.);
 			System.out.println("!!!!!!!!!!!!!!!!");
 			
+			
+			
 			System.out.println("wallet.balance.value=" + wak.wallet().getBalance().getValue());
 
+			Thread.sleep(100000);
+			
 			System.out.println("Going to stop async");
 			Service stopAsync = wak.stopAsync();
 			

@@ -68,7 +68,7 @@ public class MyWalletAppKit extends AbstractIdleService {
     
     protected String userAgent, version;
     
-    private File vWalletFile;
+//    private File vWalletFile;
     
     @Nullable protected DeterministicSeed restoreFromSeed;
     
@@ -82,16 +82,17 @@ public class MyWalletAppKit extends AbstractIdleService {
     @Nullable protected PeerDiscovery discovery;
 
     protected boolean useTor = false;   // Perhaps in future we can change this to true.
-    
-    private WalletDelegate walletDelegate;
 
 	private final PersistableWalletRepository repo;
+
+	private final Long walletId;
     
-	public MyWalletAppKit(PersistableWalletRepository repo, NetworkParameters params) {
+	public MyWalletAppKit(PersistableWalletRepository repo, NetworkParameters params, Long walletId) {
 		super();
 		this.repo = repo;
 		this.params = params;
 		this.context = new Context(params);
+		this.walletId = walletId;
 	}
 	
 	/**
@@ -131,27 +132,28 @@ public class MyWalletAppKit extends AbstractIdleService {
             wallet = loadWallet(persistableWallet.getId(), false);
         }
 
-        if (useAutoSave) {
-            this.setupAutoSave(wallet);
-        }
+//        if (useAutoSave) {
+//            this.setupAutoSave(wallet);
+//        }
 
         return wallet;
     }
     
     private void maybeMoveOldWalletOutOfTheWay() {
-        if (restoreFromSeed == null) return;
-        if (!vWalletFile.exists()) return;
-        int counter = 1;
-        File newName;
-        do {
-            newName = new File(vWalletFile.getParent(), "Backup " + counter + " for " + vWalletFile.getName());
-            counter++;
-        } while (newName.exists());
-        log.info("Renaming old wallet file {} to {}", vWalletFile, newName);
-        if (!vWalletFile.renameTo(newName)) {
-            // This should not happen unless something is really messed up.
-            throw new RuntimeException("Failed to rename wallet for restore");
-        }
+    	log.warn("commented out this method. Maybe it is not needed in case of db wallet storage");
+//        if (restoreFromSeed == null) return;
+//        if (!vWalletFile.exists()) return;
+//        int counter = 1;
+//        File newName;
+//        do {
+//            newName = new File(vWalletFile.getParent(), "Backup " + counter + " for " + vWalletFile.getName());
+//            counter++;
+//        } while (newName.exists());
+//        log.info("Renaming old wallet file {} to {}", vWalletFile, newName);
+//        if (!vWalletFile.renameTo(newName)) {
+//            // This should not happen unless something is really messed up.
+//            throw new RuntimeException("Failed to rename wallet for restore");
+//        }
     }
     
     /**
@@ -164,9 +166,9 @@ public class MyWalletAppKit extends AbstractIdleService {
         return ImmutableList.of();
     }
     
-    protected void setupAutoSave(Wallet wallet) {
-        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
-    }
+//    protected void setupAutoSave(Wallet wallet) {
+//        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
+//    }
 
     
     private Wallet loadWallet(Long walletId, boolean shouldReplayWallet) throws Exception {
@@ -221,9 +223,11 @@ public class MyWalletAppKit extends AbstractIdleService {
         try {
             File chainFile = new File("my.spvchain");
             boolean chainFileExists = chainFile.exists();
-            vWalletFile = new File("my.wallet");
-            boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null;
-            vWallet = createOrLoadWallet(1L, shouldReplayWallet);
+            
+            boolean walletFileExists = repo.findById(walletId).isPresent();
+            
+            boolean shouldReplayWallet = (walletFileExists && !chainFileExists) || restoreFromSeed != null;
+            vWallet = createOrLoadWallet(walletId, shouldReplayWallet);
 
             // Initiate Bitcoin network objects (block store, blockchain and peer group)
             vStore = provideBlockStore(chainFile);
@@ -327,7 +331,8 @@ public class MyWalletAppKit extends AbstractIdleService {
         try {
             Context.propagate(context);
             vPeerGroup.stop();
-            vWallet.saveToFile(vWalletFile);
+            //TODO: replace saving to file with saving to database
+//            vWallet.saveToFile(vWalletFile);
             vStore.close();
 
             vPeerGroup = null;
